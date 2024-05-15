@@ -14,7 +14,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.common.exceptions import (
-    TimeoutException,
     NoSuchElementException,
     ElementClickInterceptedException,
 )
@@ -45,39 +44,20 @@ def get_job_posting_links(driver, keyword):
         EC.presence_of_element_located((By.CSS_SELECTOR, "div table tbody tr td a"))
     )
 
-    job_links = driver.find_elements(By.CSS_SELECTOR, "div table tbody tr")
-
-    # Loop through each row to find the <a> tags with titles
-    job_urls = []
-
-    for row in job_links:
-        # Find all <a> tags within the current rowclearB
-        links_in_row = row.find_elements(By.TAG_NAME, "a")
-        
-        # Loop through each <a> tag in the current row
-        for link in links_in_row:
-            # Check if the <a> tag has a title attribute
-            if link.get_attribute("title"):
-                # Do whatever you need to do with the link
-                job_urls.append(link.get_attribute("href"))
-
-    return job_urls[:10]
-
     # Find all job links
-    # job_links = driver.find_elements(By.CSS_SELECTOR, "div table tbody tr td a")
+    job_links = driver.find_elements(By.CSS_SELECTOR, "div table tbody tr td a")
 
-    # job_urls = [link.get_attribute("href") for link in job_links]
-    # # driver.quit()
+    job_urls = [link.get_attribute("href") for link in job_links]
+    # driver.quit()
 
-    # first_3_jobs = job_urls[:3]
+    first_3_jobs = job_urls[:1]
 
-    # # Get the last 2 elements
-    # last_2_jobs = job_urls[-2:]
+    # Get the last 2 elements
+    last_2_jobs = job_urls[-2:]
 
-    # # Combine the first 3 and last 2 elements into a single list
-    # selected_jobs = first_3_jobs  + last_2_jobs
-    # print(selected_jobs)
-    # return selected_jobs
+    # Combine the first 3 and last 2 elements into a single list
+    selected_jobs = first_3_jobs  + last_2_jobs
+    return selected_jobs
 
 def dismiss_cookie_popup(driver):
     try:
@@ -94,10 +74,6 @@ def dismiss_cookie_popup(driver):
         okay_button.click()
         print("Dismissed cookie popup.")
         return True
-    except TimeoutException:
-        # If the cookie popup doesn't appear within the timeout period, simply return False
-        print("Cookie popup not found within timeout.")
-        return False
     except NoSuchElementException:
         # Handle exception if cookie popup is not found
         print("Cookie popup not found.")
@@ -113,12 +89,12 @@ def apply_to_jobs(driver):
 
     submit_button.click()
 
-    # Wait for the page content to load after clicking submit
-    wait = WebDriverWait(driver, 7000).until(
-        EC.visibility_of_element_located(
-            (By.CSS_SELECTOR, "div.modal-body")
-        )
-    )
+    # # Wait for the page content to load after clicking submit
+    # wait = WebDriverWait(driver, 7000).until(
+    #     EC.visibility_of_element_located(
+    #         (By.CSS_SELECTOR, "div.modal-body")
+    #     )
+    # )
 
     element = WebDriverWait(driver, 10).until(
         EC.element_to_be_clickable((By.XPATH, '//input[@value="default"]'))
@@ -198,28 +174,17 @@ def get_job_page_content(driver,url, email, name, skill, resume_path):
     page_source = driver.page_source
 
     # Dismiss the cookie popup
-    cookies = dismiss_cookie_popup(driver)
+    # cookies = dismiss_cookie_popup(driver)
 
-    if cookies:
-        if not is_logged_in:
-            apply_to_jobs_without_loggined(driver, email, name, skill, resume_path)
-        else:
-            apply_to_jobs(driver)
-
+    if not is_logged_in:
+        # if cookies:
+        #     apply_to_jobs_without_loggined(driver, email, name, skill, resume_path)
+        apply_to_jobs_without_loggined(driver, email, name, skill, resume_path)
     else:
-        if not is_logged_in:
-            apply_to_jobs_without_loggined(driver, email, name, skill, resume_path)
-        else:
-            apply_to_jobs(driver)
-
-
-    # if not is_logged_in:
-    #     # if cookies:
-    #         # apply_to_jobs_without_loggined(driver, email, name, skill, resume_path)
-    # else:
-    #     # if not cookies:
-    #     #     print("Cookie popup not found.")
-    #     #     apply_to_jobs(driver)
+        # if not cookies:
+        #     print("Cookie popup not found.")
+        #     apply_to_jobs(driver)
+        apply_to_jobs(driver)
     
 
 def is_similar(word1, word2, threshold=0.7):
@@ -274,14 +239,12 @@ if __name__ == "__main__":
             print('Login Successfully')
             driver.get("https://www.jobisite.com/")
             job_urls = get_job_posting_links(driver, search_keyword)
-
-            # print(job_urls)
-            # # Check if job_urls is a single URL or a list of URLs
+            # Check if job_urls is a single URL or a list of URLs
             if isinstance(job_urls, str):
                 job_urls = [job_urls]  # Convert to list if single URL
 
             # Function to apply to a job
-            # dclef apply_job(url):
+            # def apply_job(url):
 
             for job_url in job_urls:
                 get_job_page_content(
@@ -293,14 +256,15 @@ if __name__ == "__main__":
                     "/home/bmn/Downloads/Black and White Simple Business School Graduate Corporate Resume.pdf",
                 )
 
-            # # Create and start a thread for each job URL
+
+            # Create and start a thread for each job URL
             # threads = []
             # for job_url in job_urls:
             #     thread = threading.Thread(target=apply_job, args=(job_url,))
             #     threads.append(thread)
             #     thread.start()
 
-            # # # Wait for all threads to finish
+            # # Wait for all threads to finish
             # for thread in threads:
             #     thread.join()
     else:
